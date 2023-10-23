@@ -1,5 +1,5 @@
 import { API_URL } from "@/constants/url";
-import React from "react";
+import React, { useState } from "react";
 import { mutate } from "swr";
 import useSWR from "swr";
 
@@ -9,6 +9,8 @@ type TodoProps = {
 
 const Todo = ({ todo }: TodoProps) => {
   const { data: todos } = useSWR(`${API_URL}/allTodos`); // todosデータを取得
+  const [editing, setEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(todo.title);
 
   const toggleTodoCompletion = async (id: number, isCompleted: boolean) => {
     const response = await fetch(`${API_URL}/editTodo/${id}`, {
@@ -36,6 +38,23 @@ const Todo = ({ todo }: TodoProps) => {
     }
   };
 
+  const handleEdit = async () => {
+    if (editing) {
+      const response = await fetch(`${API_URL}/editTodo/${todo.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editedTitle }),
+      });
+      if (response.ok && todos) {
+        const updatedTodos = todos.map((t: TodoType) =>
+          t.id === todo.id ? { ...t, title: editedTitle } : t
+        );
+        mutate(`${API_URL}/allTodos`, updatedTodos, false);
+      }
+    }
+    setEditing(!editing);
+  };
+
   return (
     <div>
       <li className="py-4">
@@ -51,21 +70,38 @@ const Todo = ({ todo }: TodoProps) => {
               onChange={() => toggleTodoCompletion(todo.id, todo.isCompleted)}
             />
             <label className="ml-3 block text-gray-900">
-              <span
-                className={`text-lg font-medium mr-2 ${
-                  todo.isCompleted ? "line-through" : ""
-                }`}
-              >
-                {todo.title}
-              </span>
+              {editing ? (
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="border rounded py-1 px-2"
+                />
+              ) : (
+                <span
+                  className={`text-lg font-medium mr-2 ${
+                    todo.isCompleted ? "line-through" : ""
+                  }`}
+                >
+                  {todo.title}
+                </span>
+              )}
             </label>
           </div>
-          <button
-            className="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-2 rounded"
-            onClick={() => deleteTodo(todo.id)}
-          >
-            ✖
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              className="duration-150 bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-2 rounded"
+              onClick={handleEdit}
+            >
+              {editing ? "Save" : "✒"}
+            </button>
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-2 rounded"
+              onClick={() => deleteTodo(todo.id)}
+            >
+              ✖
+            </button>
+          </div>
         </div>
       </li>
     </div>
