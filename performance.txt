@@ -1,0 +1,15 @@
+1. fetchの確認 
+2. useRefで値を取得
+3. useRefを使用しない場合はmemo化とuseCallback
+  const MemoizedTodo = React.memo(Todo);
+
+  const onTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  }, []);
+
+    <ul className="divide-y divide-gray-200 px-4">
+      {data?.map((todo) => (
+        <MemoizedTodo key={todo.id} todo={todo} />
+      ))}
+    </ul>
+
